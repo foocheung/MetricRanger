@@ -41,8 +41,8 @@ mod_dataInput_server3 <- function(input, output, session, file){  #,batches,sim)
     fffdd3<<-ffee
 
 tagList(
-    selectInput(ns("sampleid"), "Filter Samples" ,colnames(file$df()$s),   multiple = TRUE),
-    selectInput(ns("rowid"), "Filter Rows" ,ffee, "Metric.Name",multiple = TRUE),
+  column(6,selectInput(ns("sampleid"), "Filter Samples" ,colnames(file$df()$s),   multiple = TRUE)),
+  column(6,selectInput(ns("rowid"), "Filter Rows" ,ffee, "Metric.Name",multiple = TRUE)),
     actionButton(ns("goButtonp2"), "Go!",icon("paper-plane"))
 )
     })

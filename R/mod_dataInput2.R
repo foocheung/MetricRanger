@@ -12,17 +12,12 @@ addResourcePath("d", "inst/app/www/")
 mod_dataInput_ui2 <- function(id){
   ns <- NS(id)
 
- # tagList(
+
 
       tabPanel("Table",
-   # shinydashboard::dashboardSidebar(
-    #  shinydashboard::sidebarMenu(id = "Options",
-                       # uiOutput(ns("col"))
    DT::dataTableOutput(ns('tab'))
+)
 
-    )
-
- # )
 
 }
 
@@ -33,7 +28,7 @@ mod_dataInput_ui2 <- function(id){
 #' @export
 #' @keywords internal
 
-mod_dataInput_server2 <- function(input, output, session, file){  #,batches,sim){
+mod_dataInput_server2 <- function(input, output, session, file){
   ns <- session$ns
 
 dat2<-reactive({
@@ -98,8 +93,13 @@ else if (file$traf() ==2){
 
     fff<<-ff
     df.list = list()
+    f.list=list()
    # foreach (i=1:length(t(ff)),.combine="rbind") %do% {
     for(i in 1:length(t(ff))) {
+
+
+
+
 
       id<-gsub(".*\\/(.*)\\/(.*)\\/outs.*","\\1_\\2",perl=TRUE,ff[i])
 
@@ -110,13 +110,38 @@ else if (file$traf() ==2){
       #id<-gsub("","",perl=TRUE,id )
       df <-readr::read_csv(ff[i])  %>% dplyr::filter(!is.na(`Group Name`) ) %>% dplyr::filter(`Library Type` == file$sel())
         ##dplyr::filter(`Library Type` == "Gene Expression") #%>% filter(`Library Type` %in% "VDJ T") #c("Antibody Capture","Gene Expression"))
+      df_all<-readr::read_csv(ff[i])  %>% dplyr::filter(!is.na(`Group Name`))
+
+
+       libs<-pull(df_all, `Library Type`) %>% unique()
+
+       lll<<-libs
 
        colnames(df)[6] <- paste("sample",id, sep="_")
        dffff<<-df[6]
        df[6] <- readr::parse_number(df[[6]]) %>% tibble::as.tibble()
-      df.list[[i]] = df
-    }
+       df.list[[i]] = df
 
+
+      Split <- strsplit(ff[i], "\\/")
+      spsp<<-Split
+      flist1<<-f.list
+      iii<<-i
+      s1<<- Split[[1]][length(Split[[1]])-5]
+      s2<<- Split[[1]][length(Split[[1]])-4]
+      s3<<- dput(libs)
+
+      f.list[[i]]<-c(Split[[1]][length(Split[[1]])-5],Split[[1]][length(Split[[1]])-4],deparse(dput(libs)))
+
+      flist2<<-f.list
+
+     # f.list[[i]]<-c(ff[[i]][length(ff[[3]])-5],ff[[i]][length(ff[[3]])-4])
+      }
+
+    flst<-do.call(rbind.data.frame, f.list) %>% as.tibble()
+    colnames(flst)<-c("run_directory", "sample_directory", "library")
+
+    fflst<<-flst
 
     ss<<-df.list
     df.list<-purrr::discard(df.list, function(z) nrow(z) == 0)
@@ -131,7 +156,7 @@ else if (file$traf() ==2){
 
     })
 })
-  return(list(s =s,s1=s1))
+  return(list(s =s,s1=s1,ff=ff, f=f,flst=flst ))
   })
 
 
@@ -147,6 +172,8 @@ output$tab <- DT::renderDataTable(
     )
   )
 )
+
+
 
 
 

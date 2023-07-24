@@ -26,6 +26,9 @@ app_ui <- function() {
       mainPanel(
 
         tabsetPanel(
+          mod_dataInput_ui5(
+            "dataInput_ui_meta5"
+          ),
           mod_dataInput_ui2(
                "dataInput_ui_meta2"
             ),
@@ -35,6 +38,7 @@ app_ui <- function() {
           mod_dataInput_ui4(
             "dataInput_ui_meta4"
           )
+
         )
         )
  #     )
