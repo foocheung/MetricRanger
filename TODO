@@ -3,7 +3,4 @@ tab to plots
 tab to summarise runs
 
 
-
-
-sss_l<-sss %>% as.tibble() %>%
-    gather(key = key, value = value, starts_with('sample'))
+Add to files list how many library of each
