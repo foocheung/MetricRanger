@@ -99,7 +99,7 @@ else if (file$traf() ==2){
 
 
 
-
+      path<-gsub("(.*)\\/outs.*","\\1",perl=TRUE,ff[i])
 
       id<-gsub(".*\\/(.*)\\/(.*)\\/outs.*","\\1_\\2",perl=TRUE,ff[i])
 
@@ -131,7 +131,7 @@ else if (file$traf() ==2){
       s2<<- Split[[1]][length(Split[[1]])-4]
       s3<<- dput(libs)
 
-      f.list[[i]]<-c(Split[[1]][length(Split[[1]])-5],Split[[1]][length(Split[[1]])-4],deparse(dput(libs)))
+      f.list[[i]]<-c(path,Split[[1]][length(Split[[1]])-5],Split[[1]][length(Split[[1]])-4],deparse(dput(libs)))
 
       flist2<<-f.list
 
@@ -139,7 +139,7 @@ else if (file$traf() ==2){
       }
 
     flst<-do.call(rbind.data.frame, f.list) %>% as.tibble()
-    colnames(flst)<-c("run_directory", "sample_directory", "library")
+    colnames(flst)<-c("path", "run_directory", "sample_directory", "library")
 
     fflst<<-flst
 

@@ -20,7 +20,7 @@ app_ui <- function() {
         sidebarPanel(width=2,
           mod_dataInput_ui(
             "dataInput_ui_meta"
-          ),
+          )
           )
         ),
       mainPanel(
