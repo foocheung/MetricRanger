@@ -21,7 +21,7 @@ mod_dataInput_ui <- function(id){
                                                  icon=icon("file-arrow-up"),
                                                  ""),
 
-selectInput(ns("sel"), "Select Library", c("VDJ T","Antibody Capture","Gene Expression","VDJ B"), "Gene Expression"),
+selectInput(ns("sel"), "Select Library", c("VDJ T","Antibody Capture","Gene Expression","VDJ B", "ATAC"), "Gene Expression"),
 selectInput(ns("traf"), "Select How Many Directories to Transverse", c(1,2,3,4), "1"),
     actionButton(ns("goButtonp"), "Go!",icon("paper-plane"))
 
@@ -36,12 +36,12 @@ selectInput(ns("traf"), "Select How Many Directories to Transverse", c(1,2,3,4),
 mod_dataInput_server <- function(id){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    start<-"/Volumes/CHI/PROJECTS/2022_CHI_PROPOSALS/Manthiram_Covid-tonsil_CHI-306/NEW_DATA/Manthiram_CHI-306/process/RUN_V1"
 
     volumes <- shinyFiles::getVolumes()()
     shinyFiles::shinyDirChoose(input, 'directory', roots=volumes, session=session)
-  #  shinyFiles::shinyDirChoose(input, 'directory', roots=start, session=session)
-    path1 <- reactive({
+
+
+      path1 <- reactive({
       req(input$goButtonp)
       return(print(shinyFiles::parseDirPath(volumes, input$directory)))
     })

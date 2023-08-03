@@ -12,11 +12,11 @@ app_ui <- function() {
     # golem_add_external_resources(),
     # List the first level UI elements here
     shinyUI( pageWithSidebar(
-      HTML("<CENTER><H2>10X Directory Parser"),
+      HTML("<CENTER><H2>"),
         # "",
       #theme="paper",
       tabPanel(
-  "Test Load Data",
+  "",
         sidebarPanel(width=2,
           mod_dataInput_ui(
             "dataInput_ui_meta"
