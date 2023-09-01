@@ -20,10 +20,12 @@ mod_dataInput_ui <- function(id){
                                   shinyFiles::shinyDirButton(ns("directory"), "Load",
                                                  icon=icon("file-arrow-up"),
                                                  ""),
+                                  shinyscreenshot::screenshotButton(label="Captureentirepage"),
 
-selectInput(ns("sel"), "Select Library", c("VDJ T","Antibody Capture","Gene Expression","VDJ B", "ATAC"), "Gene Expression"),
+selectInput(ns("sel"), "Select Library", c("VDJ T","Antibody Capture","Gene Expression","VDJ B", "ATAC", "Custom Feature"), "Gene Expression"),
 selectInput(ns("traf"), "Select How Many Directories to Transverse", c(1,2,3,4), "1"),
     actionButton(ns("goButtonp"), "Go!",icon("paper-plane"))
+
 
 )
   )

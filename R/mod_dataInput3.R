@@ -40,11 +40,19 @@ mod_dataInput_server3 <- function(input, output, session, file){  #,batches,sim)
     ffee<- file$df()$s$metric_name
     fffdd3<<-ffee
 
-tagList(
+
+
+  # if (NCOL(ffee) == 1){
+  #   HTML("<H3> There is no data</H3>")
+  #
+  # }else{
+    tagList(
   column(6,selectInput(ns("sampleid"), "Filter Samples" ,colnames(file$df()$s),   multiple = TRUE)),
   column(6,selectInput(ns("rowid"), "Filter Rows" ,ffee, "metric_name",multiple = TRUE)),
-    actionButton(ns("goButtonp2"), "Go!",icon("paper-plane"))
-)
+  actionButton(ns("goButtonp2"), "Go!",icon("paper-plane"))
+    )
+#  }
+
     })
 
 
@@ -60,17 +68,25 @@ tagList(
 
    ddffs<- file$df()$s
    ddffs22<-ddffs
-  output$tab2 <- DT::renderDataTable(
+
+ #  if (NCOL(ffee) == 1){
+#     HTML("<H3> There is no data</H3>")
+
+  # }else{
+
+     output$tab2 <- DT::renderDataTable(
      DT::datatable(
       file$df()$s %>% dplyr::select(input$sampleid) %>% dplyr::filter(metric_name %in% input$rowid),
       extensions = 'Buttons', options = list(
         dom = 'Bfrtip', pageLength = 500,
         buttons = c('copy', 'csv', 'excel', 'pdf', 'print')
+))
+     )
+  #   }
+   #   )
 
-      )
-
-    )
-  )
+  #  )
+  #)
   } )
 
   return(list(

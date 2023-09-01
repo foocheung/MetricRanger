@@ -36,7 +36,9 @@ mod_dataInput_server4 <- function(input, output, session, file, file2){  #,batch
   s<-reactive({
     req(file2$goButtonp2())
 
-   sss1 <-file$df()$s1
+   sss1 <-file$df()$s
+  ssi<<- file2$sampleid()
+  rri<<-  file2$rowid()
     sss2<<-sss1
 
  # sss<-file$df()$s1 %>% dplyr::select(Metric.Name,file2$sampleid()) %>% dplyr::filter(Metric.Name %in% file2$rowid())
@@ -45,7 +47,8 @@ mod_dataInput_server4 <- function(input, output, session, file, file2){  #,batch
     sss_l<-   file$df()$s1 %>% tibble::as.tibble() %>% tidyr::gather(key = key, value = value, starts_with('sample'))
     sss_l$key <- gsub("sample_", "", sss_l$key)
       #dplyr::rename_all(~ sub("sample_", "", .x)) %>%
-    sss_l <- sss_l %>%  dplyr::filter(key %in% file2$sampleid())  %>% dplyr::filter(metric_name %in% file2$rowid())
+    sss2_2l <<- sss_l
+        sss_l <- sss_l %>%  dplyr::filter(key %in% file2$sampleid())  %>% dplyr::filter(metric_name %in% file2$rowid())
 
   sss_l
   })
