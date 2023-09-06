@@ -44,7 +44,12 @@ mod_dataInput_server4 <- function(input, output, session, file, file2){  #,batch
  # sss<-file$df()$s1 %>% dplyr::select(Metric.Name,file2$sampleid()) %>% dplyr::filter(Metric.Name %in% file2$rowid())
  # sss_l<-sss %>% tibble::as.tibble() %>%
  #   tidyr::gather(key = key, value = value, starts_with('sample')) %>% dplyr::rename_all(~ sub("sample_", "", .x))
-    sss_l<-   file$df()$s1 %>% tibble::as.tibble() %>% tidyr::gather(key = key, value = value, starts_with('sample'))
+  ##  sss_l<-   file$df()$s1 %>% tibble::as.tibble() %>% tidyr::gather(key = key, value = value, starts_with('sample'))
+
+
+    sss_l<-   file$df()$s %>% tibble::as.tibble() %>% tidyr::gather(key = "key", value = "value",6:length(file$df()$s))
+
+    ssss_ll<<-sss_l
     sss_l$key <- gsub("sample_", "", sss_l$key)
       #dplyr::rename_all(~ sub("sample_", "", .x)) %>%
     sss2_2l <<- sss_l
