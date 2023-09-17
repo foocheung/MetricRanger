@@ -16,9 +16,11 @@ mod_dataInput_ui2 <- function(id){
 tabsetPanel(
 
   tabPanel("Tables",
-DT::dataTableOutput(ns('tab'))
+#DT::dataTableOutput(ns('tab2'))
+uiOutput(ns("tab2")),
 ),
-  tabPanel("Web",
+  tabPanel("10X Cell Ranger Web Report",
+
         uiOutput(ns("web")),
         actionButton(ns("go4"),"Go!"),
        # htmlOutput(ns("web_if")) #,
@@ -26,7 +28,30 @@ DT::dataTableOutput(ns('tab'))
        # htmlOutput(ns("web_if2"))#,
       #  textOutput(uu)
        # includeHTML("/Volumes/CHI/TEMP/TEST3/CHI018_atac/outs/web_summary.html")
+),
+tabPanel("Heatmap Plot",
+         uiOutput(ns('moreControls2d')),
+
+         #plotlyOutput(ns("distPlot"),width = input$size, height = "400px"),
+actionButton(ns("goplot"),"Plot"),
+uiOutput(ns("dist2plot"))
+#plotly::plotlyOutput(ns("distPlot"),width = input$width, height = input$height)
+),
+tabPanel("Correlation Plot",
+         uiOutput(ns("more_corr")),
+     #  actionButton(ns("goplot2"),"Plot"),
+        # plotOutput(ns("heatmap")),
+     uiOutput(ns('plcor'))
+),
+tabPanel("PCA Plot",
+         plotOutput(ns("pca"), width = "100%"),
+),
+tabPanel("Bar Chart",
+         uiOutput(ns("select_met")),
+         plotOutput(ns("gpl"), width = "100%")
+
 )
+
 )
 )
 }
@@ -285,23 +310,210 @@ sss<<-s
   #})
 
 
+output$moreControls2d <- renderUI({
+
+  tagList(
+
+    div(style="display: inline-block;horizontal-align:top; width: 25%;",sliderInput(ns("width"), "Plot Width:",
+                                                                                    min = 400, max = 2000, value = 600)) ,
+    div(style="display: inline-block;horizontal-align:top; width: 25%;",sliderInput(ns("height"), "Plot Height:",
+                                                                                    min = 400, max = 2000, value = 600)),
+    actionButton(ns("goplot"), "Plot")
+
+  )
+})
+
+
+
+output$more_corr <- renderUI({
+
+  tagList(
+
+    div(style="display: inline-block;horizontal-align:top; width: 25%;",sliderInput(ns("widthcor"), "Plot Width:",
+                                                                                    min = 400, max = 2000, value = 600)) ,
+    div(style="display: inline-block;horizontal-align:top; width: 25%;",sliderInput(ns("heightcor"), "Plot Height:",
+                                                                                    min = 400, max = 2000, value = 600)),
+    actionButton(ns("goplotcor"), "Plot")
+
+  )
+})
+
+
+
+output$select_met <- renderUI({
+  e<-dat2()$s
+
+  tagList(
+
+    div(style="display: inline-block;horizontal-align:top; width: 25%;",selectInput(ns("sel"), "Select:",choices = e$metric_name,multiple  =TRUE)) ,
+
+    actionButton(ns("gosel"), "Plot")
+
+  )
+})
+
+
+
+
+
+
+rsel<-reactive({
+  req(input$gosel)
+
+  sss1 <-input$sel
+
+
+
+  # sss<-file$df()$s1 %>% dplyr::select(Metric.Name,file2$sampleid()) %>% dplyr::filter(Metric.Name %in% file2$rowid())
+  # sss_l<-sss %>% tibble::as.tibble() %>%
+  #   tidyr::gather(key = key, value = value, starts_with('sample')) %>% dplyr::rename_all(~ sub("sample_", "", .x))
+  ##  sss_l<-   file$df()$s1 %>% tibble::as.tibble() %>% tidyr::gather(key = key, value = value, starts_with('sample'))
+
+
+  sss_l<-    e<-dat2()$s %>% tibble::as.tibble() %>% tidyr::gather(key = "key", value = "value",6:length( e<-dat2()$s))
+
+  ssss_ll<<-sss_l
+  sss_l$key <- gsub("sample_", "", sss_l$key)
+  #dplyr::rename_all(~ sub("sample_", "", .x)) %>%
+  sss2_2l <<- sss_l
+ # sss_l <- sss_l %>%  dplyr::filter(key %in% file2$sampleid())  %>% dplyr::filter(metric_name %in% file2$rowid())
+  sss_l <- sss_l  %>% dplyr::filter(metric_name %in% input$sel)
+  sss_l
+})
+
+
+output$gpl <- renderPlot({
+  req(input$gosel)
+
+   sss_l<-rsel()
+  ssslll<<-sss_l
+
+  ggplot2::ggplot(sss_l, ggplot2::aes(x=reorder(key, -value), y=value)) +
+    ggplot2::geom_col() +
+    ggplot2::facet_wrap(.~ metric_name,ncol = 5, scales = "free")+
+    ggplot2::scale_x_discrete(guide = ggplot2::guide_axis(angle = 90))+ ggplot2::xlab("")
+
+
+})
+
+
+
+
+
+output$dist2plot<-renderUI({
+
+  req(input$goplot)
+#  we<<-input$width
+  isolate({
+#  #  isolate(
+plotly::plotlyOutput(ns("distPlot"))
+#,width = input$width, height = input$height)
+##)
+  })
+})
+
+
+output$distPlot <- plotly::renderPlotly({
+  req(input$goplot)
+#heatmaply(percentize(as.matrix(as.data.frame(dat2()$s[6:length(dat2()$s)]))), plot_method="plotly" ,row_side_colors =dat2()$s[5])
+ isolate({
+   e<-dat2()$s
+
+    e <- e %>% dplyr::distinct(metric_name, .keep_all = TRUE)
+    ee<<-e
+
+
+
+    e<-e[5:length(e)]
+    eee<<-e
+
+  e <- e[rowSums(e[-1])>0,]
+
+  eeee<<-e
+
+
+  d<-e[, -1]
+  ddd<<-d
+
+
+  rownames(d) <- make.names(t(e[1]), unique = TRUE)
+#  rownames(d) <- make.names(t( subset(e[1], select=which(!duplicated(names(.))))) , unique = TRUE)
+
+ # heatmaply(percentize(t(as.matrix(as.data.frame(d)))), plot_method="plotly",labCol=rownames(d) ,col_side_colors =rownames(d))
+
+  heatmaply::heatmaply(t(heatmaply::percentize(t(as.matrix(as.data.frame(d))))), plot_method="plotly",labRow=rownames(d) ,row_side_colors =rownames(d), width = input$width, height = input$height )
+#  heatmaply::heatmaply(t(heatmaply::normalize(t(as.matrix(as.data.frame(d))))), plot_method="plotly",labRow=rownames(d) ,row_side_colors =rownames(d), width = input$width, height = input$height )
+#  heatmaply(t(percentize(t(as.matrix(dat2()$s[6:length(dat2()$s)])))), plot_method="plotly" ,labRow= dat2()$s[5],row_side_colors =dat2()$s[5])
+ })
+
+  })
+
+
+
+output$pca <- renderPlot({
+
+  e<-dat2()$s
+  e<-e[5:length(e)]
+  rownames(e)<-make.names(e$metric_name, unique = TRUE)
+
+  factoextra::fviz_pca_ind(stats::prcomp(
+  na.omit(t(e[-1]))))
+
+
+})
+
+
+output$plcor <- renderUI({
+
+ req(input$goplotcor)
+
+
+output$heatmap <- renderPlot( {
+
+  e<-dat2()$s
+  e <- e%>%
+    dplyr::distinct(metric_name, .keep_all = TRUE)
+
+  e<-e[5:length(e)]
+ # rownames(e)<-make.names(e$metric_name, unique = TRUE)
+#  colnames(e)<-make.names(e$metric_name, unique = TRUE)
+  corr_matrix<-cor(t(e[, -1]))
+  rownames(corr_matrix)<-make.names(t(e[1]), unique = TRUE)
+  colnames(corr_matrix)<-make.names(t(e[1]), unique = TRUE)
+ggc<<-corr_matrix
+  ggcorrplot::ggcorrplot(corr_matrix)
+
+}, width=input$widthcor,height=input$heightcor)
+
+})
+
+
+
+output$tab2 <- renderUI({
+  e<-dat2()$s
+  ##colnames(e)<-gsub('^.*\\_','',colnames(e))
 output$tab <- DT::renderDataTable(
   DT::datatable(
-    cbind(dat2()$s,prop.table(data.matrix(dat2()$s[6:length(dat2()$s)] %>% dplyr::mutate_if(is.character, as.numeric) ),margin = 1)  %>%
+    cbind(e,prop.table(data.matrix(dat2()$s[6:length(dat2()$s)] %>% dplyr::mutate_if(is.character, as.numeric) ),margin = 1)  %>%
              tibble::as.tibble()  %>%   dplyr::rename_with( ~ paste0("prop_", .x)) )    ,
   extensions = 'Buttons', options = list(columnDefs = list(list(targets=c((length(dat2()$s)+1):(length(dat2()$s) * 2 - 5)),visible=FALSE)),
       dom = 'Bfrtip', pageLength = 500,
-      buttons = c('copy', 'csv', 'excel', 'pdf', 'print')
+      buttons = c('copy', 'csv', 'excel', 'pdf', 'print')#, buttons = list(list(extend = 'colvis', columns = c(2, 3, 4)))
 
-    )) %>%  DT::formatStyle(names(dat2()$s[6:length(dat2()$s)]),
+    )) %>%
+    DT::formatStyle(names(dat2()$s[6:length(dat2()$s)]),
+  #  DT::formatStyle(names(e[6:length(e)]),
                             background = DT::styleColorBar(range(0, 1), 'lightblue'),
                             backgroundSize = '98% 88%',
                             valueColumns = c((length(dat2()$s)+1):(length(dat2()$s) * 2 - 5)),fontWeight = "bold",
                             backgroundRepeat = 'no-repeat',
                             backgroundPosition = 'center') %>%
     DT::formatStyle(names(dat2()$s[1:5]), fontWeight = "bold")
-
+  #  DT::formatStyle(names(e[1:5]), fontWeight = "bold")
 )
+
+})
+
 
 output$web<-renderUI({
 
@@ -378,8 +590,8 @@ uuu<<-loadpic()
  # tags$iframe(src = paste("library/",basename(input$websumm), sep="") ,style='width:100vw;height:100vh;')
 ######tags$iframe(src = paste("library/",basename(input$websumm), sep="") ,style='width:100vw;height:100vh;')
 slickR::slickR(slickR::slick_list(
-  tags$iframe(height="800px",
-              width="100%",
+  tags$iframe(height="600px",
+              width="900px",
               scrolling=T,
     src = loadpic() ,
     height = 500,id="theframe"
@@ -429,6 +641,10 @@ return(list(df =dat2))
 
 
 }
+
+
+
+
 
 ## To be copied in the UI
 # mod_dataInput_ui("dataInput_1")

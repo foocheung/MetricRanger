@@ -16,7 +16,7 @@ mod_dataInput_ui4 <- function(id){
 
 
     tabPanel("Plot",
-             plotOutput(ns("trend"),width = 1200))
+             plotOutput(ns("trend"),width = 1200,height=1200))
 
 
 }
