@@ -12,7 +12,7 @@ addResourcePath("d", "inst/app/www/")
 mod_dataInput_ui2 <- function(id){
   ns <- NS(id)
 
-  tabPanel("Tables + Web Summary",
+  tabPanel("Data And Plotting",
 tabsetPanel(
 
   tabPanel("Tables",
@@ -33,7 +33,7 @@ tabPanel("Heatmap Plot",
          uiOutput(ns('moreControls2d')),
 
          #plotlyOutput(ns("distPlot"),width = input$size, height = "400px"),
-actionButton(ns("goplot"),"Plot"),
+#actionButton(ns("goplot"),"Plot"),
 uiOutput(ns("dist2plot"))
 #plotly::plotlyOutput(ns("distPlot"),width = input$width, height = input$height)
 ),
@@ -78,6 +78,9 @@ dat2<-reactive({
 
    ddd<<-dir
 
+
+   fsel<<- file$sel()
+
    if (file$traf() ==1){
     metric_f<-'/*/outs/per_sample_outs/*/metrics_summary.csv'
     ff<-Sys.glob(paste(dir,metric_f,sep=""))
@@ -87,6 +90,13 @@ dat2<-reactive({
     ffg<-Sys.glob(paste(dir,metric_g,sep=""))
     fffgg2<<-ffg
 
+
+    # metric_g2<-'/*/outs/metrics_summary.csv'
+    # ffg2<-Sys.glob(paste(dir,metric_g2,sep=""))
+    # fffgg22<<-ffg2
+
+
+   # ff<-c(ff,ffg,ffg2)
     ff<-c(ff,ffg)
     ff2A<<-ff
     }
@@ -200,9 +210,16 @@ else if (file$traf() ==2){
         id<-gsub(".*\\/(.*)\\/(.*)\\/outs.*","\\1_\\2",perl=TRUE,ff[i])
       #  id<-gsub(".*\\/(.*)\\/(.*)\\/outs.*","2",perl=TRUE,ff[i])
 
-      df <-readr::read_csv(ff[i])  %>% janitor::clean_names()  %>% dplyr::filter(library_type == file$sel()) ## %>% dplyr::filter(!is.na(group_name) ) %>% dplyr::filter(library_type == file$sel())
+   #   df <-readr::read_csv(ff[i])  %>% janitor::clean_names()  %>% dplyr::filter(library_type == file$sel()) ## %>% dplyr::filter(!is.na(group_name) ) %>% dplyr::filter(library_type == file$sel())
 
-      dfdf<<-df
+        if (file$sel() == "ALL"){
+        df <-readr::read_csv(ff[i])  %>% janitor::clean_names() ## %>% dplyr::filter(library_type == file$sel()) ## %>% dplyr::filter(!is.na(group_name) ) %>% dplyr::filter(library_type == file$sel()
+        }
+        else{
+          df <-readr::read_csv(ff[i])  %>% janitor::clean_names()  %>% dplyr::filter(library_type %in% file$sel())
+        }
+
+         dfdf<<-df
       df_all<-readr::read_csv(ff[i])  %>% janitor::clean_names()  ## %>% dplyr::filter(!is.na(group_name))
 
       ff_all2<<-df_all
@@ -268,11 +285,13 @@ else if (file$traf() ==2){
   ##    dplyr::rename_all(~stringr::str_replace(.x,"TEST3_",""))
 
 
+    s <- df.list %>%  purrr::map(subset,select=-c(group_name,grouped_by))  %>% purrr::reduce(dplyr::bind_rows)  %>% tidyr::pivot_longer(
+          cols = dplyr::starts_with("sample"), values_to = "values") %>% dplyr::distinct()  %>% na.omit(values)  %>% tidyr::pivot_wider(names_from = name, values_from = values)%>%
+      dplyr::rename_all(~ sub("sample_", "", .x))
 
-
-      s<-as.data.frame(df.list %>% purrr::reduce(dplyr::full_join, by = "metric_name")) %>% tibble::as.tibble() %>% dplyr::select(c(1:5,starts_with("sample_"))) %>% dplyr::rename_all(~ sub("sample_", "", .x)) %>%
-        dplyr::mutate_if(is.numeric, round, digits=3) %>%
-        dplyr::rename_all(~stringr::str_replace(.x,"TEST3_","")) %>% dplyr::distinct()
+     # s<-as.data.frame(df.list %>% purrr::reduce(dplyr::full_join, by = "metric_name")) %>% tibble::as.tibble() %>% dplyr::select(c(1:5,starts_with("sample_"))) %>% dplyr::rename_all(~ sub("sample_", "", .x)) %>%
+     #   dplyr::mutate_if(is.numeric, round, digits=3) %>%
+    #    dplyr::rename_all(~stringr::str_replace(.x,"TEST3_","")) %>% dplyr::distinct()
 sss<<-s
 
       #}
@@ -318,7 +337,11 @@ output$moreControls2d <- renderUI({
                                                                                     min = 400, max = 2000, value = 600)) ,
     div(style="display: inline-block;horizontal-align:top; width: 25%;",sliderInput(ns("height"), "Plot Height:",
                                                                                     min = 400, max = 2000, value = 600)),
-    actionButton(ns("goplot"), "Plot")
+    #div(style="display: inline-block;vertical-align:top; width: 15%;",selectInput(ns("norm"), "Normalization", c("normalize", "percentize", "scale"), selected = "normalize")),
+   # div(style="display: inline-block;margin-top:75px, width: 25%;",actionButton(ns("goplot"),label = "HeatMap"), "HeatMap\n<BR>Plot")
+   div(style="display: inline-block;vertical-align:top; width: 15%;",selectInput(ns("norm"), "Normalization", c("normalize", "percentize", "scale"), selected = "normalize")),
+
+   actionButton(ns("goplot"),label = "HeatMap", style = 'margin-top:25px')
 
   )
 })
@@ -333,7 +356,7 @@ output$more_corr <- renderUI({
                                                                                     min = 400, max = 2000, value = 600)) ,
     div(style="display: inline-block;horizontal-align:top; width: 25%;",sliderInput(ns("heightcor"), "Plot Height:",
                                                                                     min = 400, max = 2000, value = 600)),
-    actionButton(ns("goplotcor"), "Plot")
+    actionButton(ns("goplotcor"), "Plot", style = 'margin-top:25px')
 
   )
 })
@@ -370,7 +393,7 @@ rsel<-reactive({
   ##  sss_l<-   file$df()$s1 %>% tibble::as.tibble() %>% tidyr::gather(key = key, value = value, starts_with('sample'))
 
 
-  sss_l<-    e<-dat2()$s %>% tibble::as.tibble() %>% tidyr::gather(key = "key", value = "value",6:length( e<-dat2()$s))
+  sss_l<-    e<-dat2()$s %>% tibble::as.tibble() %>% tidyr::gather(key = "key", value = "value",4:length( e<-dat2()$s))
 
   ssss_ll<<-sss_l
   sss_l$key <- gsub("sample_", "", sss_l$key)
@@ -390,8 +413,10 @@ output$gpl <- renderPlot({
 
   ggplot2::ggplot(sss_l, ggplot2::aes(x=reorder(key, -value), y=value)) +
     ggplot2::geom_col() +
-    ggplot2::facet_wrap(.~ metric_name,ncol = 5, scales = "free")+
-    ggplot2::scale_x_discrete(guide = ggplot2::guide_axis(angle = 90))+ ggplot2::xlab("")
+ #   ggplot2::facet_wrap(.~ metric_name,ncol = 5, scales = "free")+
+    ggplot2::facet_wrap(library_type ~ metric_name,ncol = 5, scales = "free")+
+    ggplot2::scale_x_discrete(guide = ggplot2::guide_axis(angle = 90))+ ggplot2::xlab("") +
+    ggplot2::theme_grey(base_size = 18)
 
 
 })
@@ -424,7 +449,7 @@ output$distPlot <- plotly::renderPlotly({
 
 
 
-    e<-e[5:length(e)]
+    e<-e[3:length(e)]
     eee<<-e
 
   e <- e[rowSums(e[-1])>0,]
@@ -437,12 +462,25 @@ output$distPlot <- plotly::renderPlotly({
 
 
   rownames(d) <- make.names(t(e[1]), unique = TRUE)
+
+  d<-t(janitor::remove_constant(t(d)))
 #  rownames(d) <- make.names(t( subset(e[1], select=which(!duplicated(names(.))))) , unique = TRUE)
 
  # heatmaply(percentize(t(as.matrix(as.data.frame(d)))), plot_method="plotly",labCol=rownames(d) ,col_side_colors =rownames(d))
-
-  heatmaply::heatmaply(t(heatmaply::percentize(t(as.matrix(as.data.frame(d))))), plot_method="plotly",labRow=rownames(d) ,row_side_colors =rownames(d), width = input$width, height = input$height )
-#  heatmaply::heatmaply(t(heatmaply::normalize(t(as.matrix(as.data.frame(d))))), plot_method="plotly",labRow=rownames(d) ,row_side_colors =rownames(d), width = input$width, height = input$height )
+#  scale = "column",
+#  heatmaply::heatmaply(t(scale=row, t(as.matrix(as.data.frame(d)))), plot_method="plotly",labRow=rownames(d) ,row_side_colors =rownames(d), width = input$width, height = input$height )
+#"normalize", "percentize", "scale"
+  if (input$norm == "normalize") {
+    heatmaply::heatmaply(t(heatmaply::normalize(t(as.matrix(as.data.frame(d))))), plot_method="plotly",labRow=rownames(d) ,row_side_colors =rownames(d), width = input$width, height = input$height )
+  }
+  else if(input$norm == "percentize"){
+    heatmaply::heatmaply(t(heatmaply::percentize(t(as.matrix(as.data.frame(d))))), plot_method="plotly",labRow=rownames(d) ,row_side_colors =rownames(d), width = input$width, height = input$height )
+  }
+ else if(input$norm == "scale"){
+ #  heatmaply::heatmaply(scale="column",(t(as.matrix(as.data.frame(d)))), plot_method="plotly",labRow=rownames(d) ,row_side_colors =rownames(d), width = input$width, height = input$height )
+   heatmaply::heatmaply(scale="row",as.matrix(as.data.frame(t(janitor::remove_constant(t(d))))), plot_method="plotly", labRow=rownames(d) ,row_side_colors =rownames(d), width = input$width, height = input$height )
+   }
+  #  heatmaply::heatmaply(t(heatmaply::normalize(t(as.matrix(as.data.frame(d))))), plot_method="plotly",labRow=rownames(d) ,row_side_colors =rownames(d), width = input$width, height = input$height )
 #  heatmaply(t(percentize(t(as.matrix(dat2()$s[6:length(dat2()$s)])))), plot_method="plotly" ,labRow= dat2()$s[5],row_side_colors =dat2()$s[5])
  })
 
@@ -453,7 +491,7 @@ output$distPlot <- plotly::renderPlotly({
 output$pca <- renderPlot({
 
   e<-dat2()$s
-  e<-e[5:length(e)]
+  e<-e[3:length(e)]
   rownames(e)<-make.names(e$metric_name, unique = TRUE)
 
   factoextra::fviz_pca_ind(stats::prcomp(
@@ -474,7 +512,7 @@ output$heatmap <- renderPlot( {
   e <- e%>%
     dplyr::distinct(metric_name, .keep_all = TRUE)
 
-  e<-e[5:length(e)]
+  e<-e[3:length(e)]
  # rownames(e)<-make.names(e$metric_name, unique = TRUE)
 #  colnames(e)<-make.names(e$metric_name, unique = TRUE)
   corr_matrix<-cor(t(e[, -1]))
@@ -494,21 +532,21 @@ output$tab2 <- renderUI({
   ##colnames(e)<-gsub('^.*\\_','',colnames(e))
 output$tab <- DT::renderDataTable(
   DT::datatable(
-    cbind(e,prop.table(data.matrix(dat2()$s[6:length(dat2()$s)] %>% dplyr::mutate_if(is.character, as.numeric) ),margin = 1)  %>%
+    cbind(e,prop.table(data.matrix(dat2()$s[4:length(dat2()$s)] %>% dplyr::mutate_if(is.character, as.numeric) ),margin = 1)  %>%
              tibble::as.tibble()  %>%   dplyr::rename_with( ~ paste0("prop_", .x)) )    ,
-  extensions = 'Buttons', options = list(columnDefs = list(list(targets=c((length(dat2()$s)+1):(length(dat2()$s) * 2 - 5)),visible=FALSE)),
+  extensions = 'Buttons', options = list(columnDefs = list(list(targets=c((length(dat2()$s)+1):(length(dat2()$s) * 2 - 3)),visible=FALSE)),
       dom = 'Bfrtip', pageLength = 500,
       buttons = c('copy', 'csv', 'excel', 'pdf', 'print')#, buttons = list(list(extend = 'colvis', columns = c(2, 3, 4)))
 
     )) %>%
-    DT::formatStyle(names(dat2()$s[6:length(dat2()$s)]),
+    DT::formatStyle(names(dat2()$s[4:length(dat2()$s)]),
   #  DT::formatStyle(names(e[6:length(e)]),
                             background = DT::styleColorBar(range(0, 1), 'lightblue'),
                             backgroundSize = '98% 88%',
-                            valueColumns = c((length(dat2()$s)+1):(length(dat2()$s) * 2 - 5)),fontWeight = "bold",
+                            valueColumns = c((length(dat2()$s)+1):(length(dat2()$s) * 2 - 3)),fontWeight = "bold",
                             backgroundRepeat = 'no-repeat',
                             backgroundPosition = 'center') %>%
-    DT::formatStyle(names(dat2()$s[1:5]), fontWeight = "bold")
+    DT::formatStyle(names(dat2()$s[1:3]), fontWeight = "bold")
   #  DT::formatStyle(names(e[1:5]), fontWeight = "bold")
 )
 

@@ -22,7 +22,7 @@ mod_dataInput_ui <- function(id){
                                                  ""),
                                   shinyscreenshot::screenshotButton(label="Captureentirepage"),
 
-selectInput(ns("sel"), "Select Library", c("VDJ T","Antibody Capture","Gene Expression","VDJ B", "ATAC", "Custom Feature"), "Gene Expression"),
+selectInput(multiple = FALSE, ns("sel"), "Select Library", c("VDJ T","Antibody Capture","Gene Expression","VDJ B", "ATAC", "Custom Feature", "ALL"), "Gene Expression"),
 selectInput(ns("traf"), "Select How Many Directories to Transverse", c(1,2,3,4), "1"),
     actionButton(ns("goButtonp"), "Go!",icon("paper-plane"))
 
