@@ -660,7 +660,7 @@ mod_dataInput_server2 <- function(input, output, session, file){
       if(input$column == "hide"){
 
         DT::datatable(
-          cbind(e  %>% mutate(across(where(is.numeric), sprintf, fmt = '%.2f')),prop.table(data.matrix(dat2()$s[4:length(dat2()$s)] %>% dplyr::mutate_if(is.character, as.numeric) ),margin = 1)  %>%
+          cbind(e  %>% dplyr::mutate(across(where(is.numeric), sprintf, fmt = '%.2f')),prop.table(data.matrix(dat2()$s[4:length(dat2()$s)] %>% dplyr::mutate_if(is.character, as.numeric) ),margin = 1)  %>%
                   tibble::as.tibble()  %>%   dplyr::rename_with( ~ paste0("prop_", .x)) )    ,
           colnames = rep("", ncol(e)),
           extensions = 'Buttons', options = list(columnDefs = list(list(targets=c((length(dat2()$s)+1):(length(dat2()$s) * 2 - 3)),visible=FALSE)),
@@ -679,7 +679,7 @@ mod_dataInput_server2 <- function(input, output, session, file){
       }
       else{
 
-        DT::datatable(cbind(e %>% mutate(across(where(is.numeric), sprintf, fmt = '%.2f')),prop.table(data.matrix(dat2()$s[4:length(dat2()$s)] %>% dplyr::mutate_if(is.character, as.numeric) ),margin = 1)  %>%
+        DT::datatable(cbind(e %>% dplyr::mutate(across(where(is.numeric), sprintf, fmt = '%.2f')),prop.table(data.matrix(dat2()$s[4:length(dat2()$s)] %>% dplyr::mutate_if(is.character, as.numeric) ),margin = 1)  %>%
                               tibble::as.tibble()  %>%   dplyr::rename_with( ~ paste0("prop_", .x)) )    ,
                       extensions = 'Buttons', options = list(columnDefs = list(list(targets=c((length(dat2()$s)+1):(length(dat2()$s) * 2 - 3)),visible=FALSE)),
                                                              dom = 'Bfrtip', pageLength = 500,
