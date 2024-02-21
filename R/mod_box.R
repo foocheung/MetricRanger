@@ -110,7 +110,8 @@ mod_box_server <- function(input, output, session, file, file2){  #,batches,sim)
       ggplot2::scale_x_discrete(name = "Samples") +      # Group label
       #ggtitle("Boxplot from data frame SomaLogic") + # Plot title
       ggplot2::theme(axis.line = ggplot2::element_line(colour = "black", # Theme customization
-                                     size = 0.25)) + ggplot2::theme_grey(base_size = 18) + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5, hjust=1))
+                                     size = 0.25)) + ggplot2::theme_grey(base_size = 18) +
+      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5, hjust=1, size=30))
 
 
 

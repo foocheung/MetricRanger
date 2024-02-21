@@ -20,13 +20,17 @@ mod_dataInput_ui <- function(id){
                                   shinyFiles::shinyDirButton(ns("directory"), "Load",
                                                  icon=icon("file-arrow-up"),
                                                  ""),
+                                #  shinyFiles::shinyDirButton(ns("directory2"), "Load2",
+                                 #                            icon=icon("file-arrow-up"),
+                                #                             ""),
                                   shinyscreenshot::screenshotButton(label="Captureentirepage"),
 
-selectInput(multiple = FALSE, ns("sel"), "Select Library", c("VDJ T","Antibody Capture","Gene Expression","VDJ B", "ATAC", "Custom Feature", "ALL"), "Gene Expression"),
+selectInput(multiple = FALSE, ns("sel"), "Select Library", c("VDJ T","Antibody Capture","Gene Expression","VDJ B", "ATAC", "Custom Feature", "Antigen Capture","ALL"), "Gene Expression"),
 selectInput(ns("traf"), "Select How Many Directories to Transverse", c(1,2,3,4), "1"),
     actionButton(ns("goButtonp"), "Go!",icon("paper-plane"))
+#,
 
-
+#actionButton(ns("goButtonp2"), "Go2!",icon("paper-plane"))
 )
   )
 
@@ -41,38 +45,28 @@ mod_dataInput_server <- function(id){
 
     volumes <- shinyFiles::getVolumes()()
     shinyFiles::shinyDirChoose(input, 'directory', roots=volumes, session=session)
-
+  #  shinyFiles::shinyDirChoose(input, 'directory', roots=c(CHI = '/Volumes/CHI/PROJECTS_Archive/2022_CHI_PROPOSALS/'), session=session)
+      shinyFiles::shinyDirChoose(input, 'directory2', roots=volumes, session=session)
 
       path1 <- reactive({
       req(input$goButtonp)
       return(print(shinyFiles::parseDirPath(volumes, input$directory)))
     })
+      path2 <- reactive({
+        req(input$goButtonp)
+        return(print(shinyFiles::parseDirPath(volumes, input$directory2)))
+      })
 
 
 
     return(list(df =path1,
+                df2 =path2,
                 goButtonp= reactive({input$goButtonp}),
                 sel= reactive({input$sel}),
                 traf= reactive({input$traf})
                 )
            )
 
-    #bat <- reactive({
-    #  input$integer
-    #})
-    #return(
-    #list(
-    #    c(
-    #    "dat"=datafile
-        #,
-        #"batches" = reactive({ input$integer }),
-        #"sim" = reactive({ input$sim })
-    #  ))
-    #)
-
-
-
-   # return(list(c("datafile" = datafile, "userFile" = userFile)))
   })
 
 }

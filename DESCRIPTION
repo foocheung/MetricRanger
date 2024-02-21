@@ -30,6 +30,7 @@ Imports:
     factoextra,
     stats,
     janitor,
+    tidyverse,
     tidyr
 Encoding: UTF-8
 LazyData: true

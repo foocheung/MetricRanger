@@ -16,7 +16,7 @@ app_ui <- function() {
         # "",
       #theme="paper",
       tabPanel(
-  "",
+           "",
         sidebarPanel(width=2,
           mod_dataInput_ui(
             "dataInput_ui_meta"
@@ -32,9 +32,9 @@ app_ui <- function() {
           mod_dataInput_ui2(
                "dataInput_ui_meta2"
             ),
-          mod_dataInput_ui3(
-            "dataInput_ui_meta3"
-          ),
+        #  mod_dataInput_ui3(
+        #    "dataInput_ui_meta3"
+        #  ),
           mod_dataInput_ui4(
             "dataInput_ui_meta4"
           )

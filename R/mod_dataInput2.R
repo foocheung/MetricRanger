@@ -17,7 +17,9 @@ tabsetPanel(
 
   tabPanel("Tables",
 #DT::dataTableOutput(ns('tab2'))
+selectInput(ns('column'), "Columns", choices = c("hide", "show"),"hide"),
 uiOutput(ns("tab2")),
+uiOutput(ns("tab2B"))
 ),
   tabPanel("10X Cell Ranger Web Report",
 
@@ -48,7 +50,9 @@ tabPanel("PCA Plot",
 ),
 tabPanel("Bar Chart",
          uiOutput(ns("select_met")),
-         plotOutput(ns("gpl"), width = "100%")
+
+   #      plotOutput(ns("gpl"), width = "100%")
+   uiOutput(ns("gpl") )
 
 )
 
@@ -66,267 +70,330 @@ tabPanel("Bar Chart",
 mod_dataInput_server2 <- function(input, output, session, file){
   ns <- session$ns
 
+
+
+
+
+#########################################################
+#########################################################
+#########################################################
+#########################################################
+#########################################################
+  read_csv_and_add_file_column <- function(file_path) {
+    # Read CSV file
+    df <- readr::read_csv(file_path)
+
+    # Extract the third folder from the file path
+    file_name <- basename(dirname(dirname(file_path)))
+
+    # Add the file column
+    df$file <- file_name
+
+
+
+
+    # Determine the Library based on column names
+    if ("Antibody: Fraction Antibody Reads" %in% colnames(df)) {
+      df$library_type <- "Antibody Capture"
+    } else if ("Reads Mapped Confidently to Genome" %in% colnames(df)) {
+      df$library_type <- "Gene Expression"
+    } else if ("Cells With IGH Contig" %in% colnames(df)) {
+      df$library_type <- "VDJ B"
+    } else if ("Cells With TRA Contig" %in% colnames(df)) {
+      df$library_type <- "VDJ T"
+    } else {
+      df$library_type <- NA  # or any other default value
+    }
+
+
+
+    return(df)
+  }
+
+     add_identifier <- function(df, identifier) {
+          df %>%
+            dplyr::mutate(unique_id = dplyr::row_number())
+
+
+        }
+
+
+  processData <- function(dir,sel,traf) {
+    req(file$goButtonp())
+    isolate({
+      withProgress(message = "Please wait...", detail = "", value = 0, max = 100, {
+       # dir <- file$df()
+        ddd <<- dir
+      #  fsel <<- file$sel()
+
+        if (traf == 1) {
+          metric_f <- '/*/outs/per_sample_outs/*/metrics_summary.csv'
+          ff <- Sys.glob(paste(dir, metric_f, sep = ""))
+
+          metric_g <- '/*/outs/summary.csv'
+          ffg <- Sys.glob(paste(dir, metric_g, sep = ""))
+          fffgg2 <<- ffg
+
+          metric_h <- '/*/outs/metrics_summary.csv'
+          ffgg <- Sys.glob(paste(dir, metric_h, sep = ""))
+          fffggg2 <<- ffgg
+
+
+
+          ff <- c(ff, ffg, ffgg)
+          ff2A <<- ff
+        } else if (traf == 2) {
+          metric_f2 <- '/*/*/outs/per_sample_outs/*/metrics_summary.csv'
+          fff2 <- Sys.glob(paste(dir, metric_f2, sep = ""))
+          metric_f <- '/*/outs/per_sample_outs/*/metrics_summary.csv'
+          ff <- Sys.glob(paste(dir, metric_f, sep = ""))
+
+          metric_g <- '/*/outs/summary.csv'
+          ffg <- Sys.glob(paste(dir, metric_g, sep = ""))
+
+          metric_g2 <- '/*/*/outs/summary.csv'
+          ffg2 <- Sys.glob(paste(dir, metric_g2, sep = ""))
+
+          ff <- c(ff, fff2, ffg, ffg2)
+          ff2A2 <<- ff
+        } else if (traf == 3) {
+          metric_f2 <- '/*/*/outs/per_sample_outs/*/metrics_summary.csv'
+          fff2 <- Sys.glob(paste(dir, metric_f2, sep = ""))
+          metric_f <- '/*/outs/per_sample_outs/*/metrics_summary.csv'
+          ff <- Sys.glob(paste(dir, metric_f, sep = ""))
+          metric_f3 <- '/*/*/*/outs/per_sample_outs/*/metrics_summary.csv'
+          fff3 <- Sys.glob(paste(dir, metric_f3, sep = ""))
+
+          metric_g <- '/*/outs/summary.csv'
+          ffg <- Sys.glob(paste(dir, metric_g, sep = ""))
+
+          metric_g2 <- '/*/*/outs/summary.csv'
+          ffg2 <- Sys.glob(paste(dir, metric_g2, sep = ""))
+
+          metric_g3 <- '/*/*/*/outs/summary.csv'
+          ffg3 <- Sys.glob(paste(dir, metric_g3, sep = ""))
+
+          ff <- c(ff, fff2, fff3, ffg3, ffg, ffg2)
+          ff3A3 <<- ff
+        } else if (traf == 4) {
+          metric_f2 <- '/*/*/outs/per_sample_outs/*/metrics_summary.csv'
+          fff2 <- Sys.glob(paste(dir, metric_f2, sep = ""))
+          metric_f <- '/*/outs/per_sample_outs/*/metrics_summary.csv'
+          ff <- Sys.glob(paste(dir, metric_f, sep = ""))
+          metric_f3 <- '/*/*/*/outs/per_sample_outs/*/metrics_summary.csv'
+          fff3 <- Sys.glob(paste(dir, metric_f3, sep = ""))
+          metric_f4 <- '/*/*/*/*/outs/per_sample_outs/*/metrics_summary.csv'
+          fff4 <- Sys.glob(paste(dir, metric_f4, sep = ""))
+          ff <- c(ff, fff2, fff3, fff4)
+        }
+
+        ff2 <- gsub(".*per_sample_outs\\/", "", ff)
+        ff3 <- gsub("\\/.*", "", ff2)
+
+        f <- ff %>%
+          tibble::as.tibble() %>%
+          dplyr::mutate("n" = gsub(".*multi_config_", "", value)) %>%
+          dplyr::mutate("n" = gsub("\\/.*", "", n)) %>%
+          dplyr::arrange(as.numeric(n))
+        fffF <<- f
+        ff <- f$value
+        fff <<- ff
+        df.list = list()
+        f.list = list()
+
+        data_list <- purrr::map(ff, ~ readr::read_csv(.x))
+
+        # Combine data frames
+        combined_data <- dplyr::bind_rows(data_list, .id = "file_id")
+
+        # Create a tidyverse tibble
+        tidy_data <- dplyr::as_tibble(combined_data)
+
+        # Print the structure of the resulting tibble
+        print(str(tidy_data))
+
+
+        for (i in 1:length(t(ff))) {
+          file_o <- gsub(".*\\/(.*)\\/(.*)\\/outs\\/(['summary.csv'\\|'metrics_summary.csv'])", "\\3", perl = TRUE, ff[i])
+          fffo <<- file_o
+
+
+          lines <- readr::read_csv(ff[i]) %>% nrow()
+          if (lines ==1){
+        ##  if (file_o == 'summary.csv') {
+            path <- gsub(".*\\/.*\\/.*\\/(.*)\\/outs", "\\1", perl = TRUE, ff[i])
+            id <- gsub(".*\\/.*\\/(.*)\\/(.*)\\/outs", "\\1_\\2", perl = TRUE, ff[i])
+
+
+
+            # Apply the function to all files in file_list$value
+            list_of_dataframes <- lapply(ff, read_csv_and_add_file_column)
+
+            # Combine all data frames into one
+            combined_df <- dplyr::bind_rows(list_of_dataframes)
+             cd<<-combined_df
+            # Transpose the combined data frame
+            transposed_df <- t(combined_df)
+            ttff<<-transposed_df
+
+            file_row_index <- which(rownames(transposed_df) == "file")
+
+
+            # Set the last row as column names
+            colnames(transposed_df) <- transposed_df[file_row_index, ]
+
+
+            # Remove the last row
+            transposed_df <- transposed_df[-nrow(transposed_df), ]
+
+            # Convert transposed tibble to data frame
+            s <- as.data.frame(transposed_df)
+     sssss<<-s
+            s1<-transposed_df[file_row_index, ]
+           ss11<<-s1
+           libs <- "Gene Expression"
+          # libs <- dplyr::pull(df_all, library_type) %>% unique()
+                      }
+          else {
+            path <- gsub("(.*)\\/outs.*", "\\1", perl = TRUE, ff[i])
+            id <- gsub(".*\\/(.*)\\/(.*)\\/outs.*", "\\1_\\2", perl = TRUE, ff[i])
+            ddd<<-id
+            if (sel == "ALL") {
+              df <- readr::read_csv(ff[i]) %>% janitor::clean_names()
+            } else {
+              df <- readr::read_csv(ff[i]) %>% janitor::clean_names() %>%
+                dplyr::filter(library_type %in% sel)
+            }
+            dfdf <<- df
+            df_all <- readr::read_csv(ff[i]) %>% janitor::clean_names()
+            ff_all2 <<- df_all
+            libs <- dplyr::pull(df_all, library_type) %>% unique()
+
+
+
+
+
+          lll <<- libs
+          colnames(df)[6] <- paste("sample", id, sep = "_")
+          dffff <<- df[6]
+          if (file_o == 'summary.csv') {
+            df[6] <- df[[6]] %>% tibble::as.tibble()
+            df.list[[i]] = df
+          } else {
+            df[6] <- readr::parse_number(df[[6]]) %>% tibble::as.tibble()
+            df.list[[i]] = df
+          }
+
+          Split <- strsplit(ff[i], "\\/")
+          spsp <<- Split
+          flist1 <<- f.list
+          iii <<- i
+          s1 <- Split[[1]][length(Split[[1]]) - 5]
+          s2 <<- Split[[1]][length(Split[[1]]) - 4]
+          s3 <<- dput(libs)
+          ppp<<-path
+          f.list[[i]] <- c(path, Split[[1]][length(Split[[1]]) - 5], Split[[1]][length(Split[[1]]) - 4], deparse(dput(libs)))
+        }
+
+        flst <- do.call(rbind.data.frame, f.list) %>%
+          tibble::as.tibble()
+        colnames(flst) <- c("path", "run_directory", "sample_directory", "library")
+        fflst <<- flst
+        dfl<<- df.list
+
+        # Create a function to add a unique identifier to each tibble in the list
+        # add_identifier <- function(df, identifier) {
+        #   df %>%
+        #     dplyr::mutate(unique_id = dplyr::row_number())
+        # }
+
+        # Apply the function to each tibble in the list
+      #  df.list_with_id <- purrr::imap(df.list, add_identifier) %>%   purrr::map(~ filter(.x, grouped_by != 'Fastq ID'))
+
+        df.list_with_id <- purrr::imap(df.list, function(df, identifier) {
+          df %>%
+            dplyr::mutate(unique_id = dplyr::row_number())
+        }) %>%
+          purrr::map(~ filter(.x, grouped_by != 'Fastq ID'))
+
+        sdd <<- df.list_with_id
+        s <- df.list_with_id  %>%
+       #  purrr::map(subset, select = -c(group_name, grouped_by)) %>%
+          purrr::map(subset,select = -c(unique_id)) %>%
+       #     purrr::map(subset) %>%
+          purrr::reduce(dplyr::bind_rows) %>%
+          tidyr::pivot_longer(
+            cols = dplyr::starts_with("sample"),
+            values_to = "values"
+          ) %>%
+          dplyr::distinct() %>%
+          na.omit(values) %>% dplyr::mutate(group_name = dplyr::if_else(grouped_by == "Fastq ID", "Fastq ID", group_name)) %>%
+          tidyr::pivot_wider(
+            names_from = name,
+            values_from = values
+          ) %>%
+        #%>% dplyr::select(-c(group_name, grouped_by, unique_id))
+         dplyr::select(-c(group_name, grouped_by))
+        sss <<- s
+
+
+}
+          })
+
+
+    })
+
+    return(list(s = s, s1 = s1, ff = ff, f = f, flst = flst))
+  }
+
+
 dat2<-reactive({
 
   req(file$goButtonp())
  # output$col <- renderPrint({
     ##sliderInput(inputId="dat_st", label = "Data Starts Here"),
- isolate({
-    withProgress(message="Please wait...", detail="", value=0, max=100, {
 
-    dir<-file$df()
+  processData(file$df(), file$sel(),file$traf())
 
-   ddd<<-dir
 
-
-   fsel<<- file$sel()
-
-   if (file$traf() ==1){
-    metric_f<-'/*/outs/per_sample_outs/*/metrics_summary.csv'
-    ff<-Sys.glob(paste(dir,metric_f,sep=""))
-
-
-    metric_g<-'/*/outs/summary.csv'
-    ffg<-Sys.glob(paste(dir,metric_g,sep=""))
-    fffgg2<<-ffg
-
-
-    # metric_g2<-'/*/outs/metrics_summary.csv'
-    # ffg2<-Sys.glob(paste(dir,metric_g2,sep=""))
-    # fffgg22<<-ffg2
-
-
-   # ff<-c(ff,ffg,ffg2)
-    ff<-c(ff,ffg)
-    ff2A<<-ff
-    }
-else if (file$traf() ==2){
-    metric_f2<-'/*/*/outs/per_sample_outs/*/metrics_summary.csv'
-    fff2<-Sys.glob(paste(dir,metric_f2,sep=""))
-    metric_f<-'/*/outs/per_sample_outs/*/metrics_summary.csv'
-    ff<-Sys.glob(paste(dir,metric_f,sep=""))
-
-    metric_g<-'/*/outs/summary.csv'
-    ffg<-Sys.glob(paste(dir,metric_g,sep=""))
-
-    metric_g2<-'/*/*/outs/summary.csv'
-    ffg2<-Sys.glob(paste(dir,metric_g2,sep=""))
-
-    ff<-c(ff,fff2, ffg, ffg2)
-    ff2A2<<-ff
-    }
-   else if (file$traf() ==3){
-     metric_f2<-'/*/*/outs/per_sample_outs/*/metrics_summary.csv'
-     fff2<-Sys.glob(paste(dir,metric_f2,sep=""))
-     metric_f<-'/*/outs/per_sample_outs/*/metrics_summary.csv'
-     ff<-Sys.glob(paste(dir,metric_f,sep=""))
-     metric_f3<-'/*/*/*/outs/per_sample_outs/*/metrics_summary.csv'
-     fff3<-Sys.glob(paste(dir,metric_f3,sep=""))
-
-     metric_g<-'/*/outs/summary.csv'
-     ffg<-Sys.glob(paste(dir,metric_g,sep=""))
-
-     metric_g2<-'/*/*/outs/summary.csv'
-     ffg2<-Sys.glob(paste(dir,metric_g2,sep=""))
-
-     metric_g3<-'/*/*/*/outs/summary.csv'
-     ffg3<-Sys.glob(paste(dir,metric_g3,sep=""))
-
-     ff<-c(ff,fff2,fff3,ffg3, ffg, ffg2)
-     ff3A3<<-ff
-        }
-   else if (file$traf() ==4){
-     metric_f2<-'/*/*/outs/per_sample_outs/*/metrics_summary.csv'
-     fff2<-Sys.glob(paste(dir,metric_f2,sep=""))
-     metric_f<-'/*/outs/per_sample_outs/*/metrics_summary.csv'
-     ff<-Sys.glob(paste(dir,metric_f,sep=""))
-     metric_f3<-'/*/*/*/outs/per_sample_outs/*/metrics_summary.csv'
-     fff3<-Sys.glob(paste(dir,metric_f3,sep=""))
-     metric_f4<-'/*/*/*/*/outs/per_sample_outs/*/metrics_summary.csv'
-     fff4<-Sys.glob(paste(dir,metric_f4,sep=""))
-     ff<-c(ff,fff2,fff3,fff4)
-   }
-
-
-
-
-
-
-    ##ff2<-gsub(".*multi_config_","",ff)
-    ff2<-gsub(".*per_sample_outs\\/","",ff)
-    ff3<-gsub("\\/.*","",ff2)
-
-
-   f<- ff %>% tibble::as.tibble() %>% dplyr::mutate("n"=gsub(".*multi_config_","", value)) %>% dplyr::mutate("n"=gsub("\\/.*","", n)) %>% dplyr::arrange(as.numeric(n))
-  fffF<<-f
-    ff<-f$value
-
-
-    fff<<-ff
-    df.list = list()
-    f.list=list()
-   # foreach (i=1:length(t(ff)),.combine="rbind") %do% {
-    for(i in 1:length(t(ff))) {
-
-
-
-
-     # dddd<<-id
-
-     # dddd2<<-id
-
-
-      file_o<-gsub(".*\\/(.*)\\/(.*)\\/outs\\/(['summary.csv'\\|'metrics_summary.csv'])","\\3",perl=TRUE,ff[i])
-       fffo <<-file_o
-      if (file_o == 'summary.csv'){
-
-        path<-gsub(".*\\/.*\\/.*\\/(.*)\\/outs","\\1",perl=TRUE,ff[i])
-
-        id<-gsub(".*\\/.*\\/(.*)\\/(.*)\\/outs","\\1_\\2",perl=TRUE,ff[i])
-        #id<-gsub(".*\\/.*\\/(.*)\\/(.*)\\/outs","\\2",perl=TRUE,ff[i])
-
-        a<-readr::read_csv(ff[i])  %>% janitor::clean_names()
-        aa2<<-a
-        a<-t(a) %>% as.data.frame() %>% tibble::rownames_to_column()
-        aa3<<-a
-        colnames(a)<-c( "metric_name","filename")
-        aa4<<-a
-
-        df<-a %>% dplyr::mutate("category" = "Library")%>%
-          dplyr::mutate("library_type" = "ATAC") %>% dplyr::mutate("group_name" = 'NA')%>% dplyr::mutate("group_by" = 'NA') %>%
-          dplyr::select(category,"library_type", "group_by", "group_name", "metric_name", "filename" )
-
-        df<- df[-c(1:3),]
-        df<-df %>% dplyr::filter(!grepl("q30",metric_name))
-
-        ff_all<<-df
-        df_all<-df
-        df<-df %>% dplyr::filter(library_type == file$sel())
-        libs<-dplyr::pull(df_all, "library_type") %>% unique()
-      } else{
-
-        path<-gsub("(.*)\\/outs.*","\\1",perl=TRUE,ff[i])
-
-        id<-gsub(".*\\/(.*)\\/(.*)\\/outs.*","\\1_\\2",perl=TRUE,ff[i])
-      #  id<-gsub(".*\\/(.*)\\/(.*)\\/outs.*","2",perl=TRUE,ff[i])
-
-   #   df <-readr::read_csv(ff[i])  %>% janitor::clean_names()  %>% dplyr::filter(library_type == file$sel()) ## %>% dplyr::filter(!is.na(group_name) ) %>% dplyr::filter(library_type == file$sel())
-
-        if (file$sel() == "ALL"){
-        df <-readr::read_csv(ff[i])  %>% janitor::clean_names() ## %>% dplyr::filter(library_type == file$sel()) ## %>% dplyr::filter(!is.na(group_name) ) %>% dplyr::filter(library_type == file$sel()
-        }
-        else{
-          df <-readr::read_csv(ff[i])  %>% janitor::clean_names()  %>% dplyr::filter(library_type %in% file$sel())
-        }
-
-         dfdf<<-df
-      df_all<-readr::read_csv(ff[i])  %>% janitor::clean_names()  ## %>% dplyr::filter(!is.na(group_name))
-
-      ff_all2<<-df_all
-      libs<-dplyr::pull(df_all, library_type) %>% unique()
-      }
-
-
-
-
-       lll<<-libs
-
-       colnames(df)[6] <- paste("sample",id, sep="_")
-       dffff<<-df[6]
-       if (file_o == 'summary.csv'){
-         df[6] <- df[[6]] %>% tibble::as.tibble()
-         df.list[[i]] = df
-
-         }else{
-
-       df[6] <- readr::parse_number(df[[6]]) %>% tibble::as.tibble()
-       df.list[[i]] = df
-       }
-
-      Split <- strsplit(ff[i], "\\/")
-      spsp<<-Split
-      flist1<<-f.list
-      iii<<-i
-      s1<<- Split[[1]][length(Split[[1]])-5]
-      s2<<- Split[[1]][length(Split[[1]])-4]
-      s3<<- dput(libs)
-
-      f.list[[i]]<-c(path,Split[[1]][length(Split[[1]])-5],Split[[1]][length(Split[[1]])-4],deparse(dput(libs)))
-   #   f.list[[i]]<-c(path,Split[[1]][length(Split[[1]])-5],Split[[1]][length(Split[[1]])-4],dput(libs))
-     flist2<<-f.list
-
-     # f.list[[i]]<-c(ff[[i]][length(ff[[3]])-5],ff[[i]][length(ff[[3]])-4])
-      }
-
-    flst<-do.call(rbind.data.frame, f.list) %>% tibble::as.tibble()
-    colnames(flst)<-c("path", "run_directory", "sample_directory", "library")
-
-    fflst<<-flst
-##NEED TO FIX HERE !!mkji9kl
-    ss<<-df.list
-    df.list<-purrr::discard(df.list, function(z) nrow(z) == 0)
-  #  sss<<-as.data.frame(df.list)
-  #  s1<-as.data.frame(df.list)
-
-    #  if (NCOL(df.list) == 1){
-    #
-    #    showModal(
-    #      modalDialog(
-    #        div("There is no processes data associated with this Analysis"),easyClose = TRUE)
-    #    )
-    #
-    #  return()
-    #
-    # #
-    #  }else{
-
-    ##  s<-as.data.frame(df.list) %>% tibble::as.tibble() %>% dplyr::select(c(1:5,starts_with("sample_"))) %>% dplyr::rename_all(~ sub("sample_", "", .x)) %>%
-    ##  dplyr::mutate_if(is.numeric, round, digits=3) %>%
-  ##    dplyr::rename_all(~stringr::str_replace(.x,"TEST3_",""))
-
-
-    s <- df.list %>%  purrr::map(subset,select=-c(group_name,grouped_by))  %>% purrr::reduce(dplyr::bind_rows)  %>% tidyr::pivot_longer(
-          cols = dplyr::starts_with("sample"), values_to = "values") %>% dplyr::distinct()  %>% na.omit(values)  %>% tidyr::pivot_wider(names_from = name, values_from = values)%>%
-      dplyr::rename_all(~ sub("sample_", "", .x))
-
-     # s<-as.data.frame(df.list %>% purrr::reduce(dplyr::full_join, by = "metric_name")) %>% tibble::as.tibble() %>% dplyr::select(c(1:5,starts_with("sample_"))) %>% dplyr::rename_all(~ sub("sample_", "", .x)) %>%
-     #   dplyr::mutate_if(is.numeric, round, digits=3) %>%
-    #    dplyr::rename_all(~stringr::str_replace(.x,"TEST3_","")) %>% dplyr::distinct()
-sss<<-s
-
-      #}
-##data.table::rbindlist(ss, fill=TRUE) %>% view()
-
-
-
-
-    })
 })
-  return(list(s =s,s1=s1,ff=ff, f=f,flst=flst ))
+
+
+
+#########################################################
+#########################################################
+#########################################################
+#########################################################
+#########################################################
+#########################################################
+
+dat2B<-reactive({
+
+  ##FIX THIS
+ # req(file$goButtonp2())
+#  req(file$goButtonp())
+#  processData(file$df2(), file$sel(),file$traf())
+
+
   })
 
 
-# DT::datatable(
-#   cbind(t,prop.table(data.matrix(t[6:length(t)]) %>% mutate_if(is.character, as.numeric)),margin = 1) %>% as.tibble()  %>%  rename_with( ~ paste0("prop_", .x))) ,
-# extensions = 'Buttons', options = list(
-#   dom = 'Bfrtip', pageLength = 500,
-#   buttons = c('copy', 'csv', 'excel', 'pdf', 'print')
-#
-# )) %>%  DT::formatStyle(paste("prop_",names(t[6:length(t)]), sep=""),
-#                         background = DT::styleColorBar(c(0,1), 'lightblue'),
-#                         backgroundSize = '98% 88%',
-#                         backgroundRepeat = 'no-repeat',
-#                         backgroundPosition = 'center')
-#%>%
-#  formatRound(which(sapply(iris,is.numeric)), digits = 2)
 
-#$lib<-renderUI({
+#########################################################
+#########################################################
+#########################################################
+#########################################################
+#########################################################
 
 
 
- # selectInput(ns("sel"), "Select Library", c("VDJ T","Antibody Capture","Gene Expression","VDJ B", "ATAC"), "Gene Expression"),
 
-  #})
+
+
+
+
+
+
 
 
 output$moreControls2d <- renderUI({
@@ -334,7 +401,7 @@ output$moreControls2d <- renderUI({
   tagList(
 
     div(style="display: inline-block;horizontal-align:top; width: 25%;",sliderInput(ns("width"), "Plot Width:",
-                                                                                    min = 400, max = 2000, value = 600)) ,
+                                                                                    min = 400, max = 2000, value = 1200)) ,
     div(style="display: inline-block;horizontal-align:top; width: 25%;",sliderInput(ns("height"), "Plot Height:",
                                                                                     min = 400, max = 2000, value = 600)),
     #div(style="display: inline-block;vertical-align:top; width: 15%;",selectInput(ns("norm"), "Normalization", c("normalize", "percentize", "scale"), selected = "normalize")),
@@ -367,12 +434,14 @@ output$select_met <- renderUI({
   e<-dat2()$s
 
   tagList(
-
-    div(style="display: inline-block;horizontal-align:top; width: 25%;",selectInput(ns("sel"), "Select:",choices = e$metric_name,multiple  =TRUE)) ,
-
-    actionButton(ns("gosel"), "Plot")
-
+    div(style = "display: inline-block; width: 15%; vertical-align: bottom;", selectInput(ns("sel"), "Select:", choices = e$metric_name, multiple = TRUE)),
+    div(style = "display: inline-block; width: 15%; vertical-align: top;", sliderInput(ns("bar_width"), "Plot Width:", min = 400, max = 2000, value = 900)),
+    div(style = "display: inline-block; width: 15%; vertical-align: top;", sliderInput(ns("bar_height"), "Plot Height:", min = 400, max = 2000, value = 600)),
+    div(style = "display: inline-block; width: 15%; vertical-align: top;", sliderInput(ns("font"), "Font Size:", min = 1, max = 80, value = 25)),
+    div(style = "display: inline-block; width: 10%; vertical-align: top;", actionButton(ns("gosel"), "Plot"))
   )
+
+
 })
 
 
@@ -404,24 +473,27 @@ rsel<-reactive({
   sss_l
 })
 
-
-output$gpl <- renderPlot({
+output$gpl<-renderUI({
   req(input$gosel)
+
+#output$gpl <- renderPlot({
+ renderPlot({
 
    sss_l<-rsel()
   ssslll<<-sss_l
 
   ggplot2::ggplot(sss_l, ggplot2::aes(x=reorder(key, -value), y=value)) +
-    ggplot2::geom_col() +
+    ggplot2::geom_col() +  geom_text(aes(label = value), vjust = -0.5)  +
  #   ggplot2::facet_wrap(.~ metric_name,ncol = 5, scales = "free")+
     ggplot2::facet_wrap(library_type ~ metric_name,ncol = 5, scales = "free")+
     ggplot2::scale_x_discrete(guide = ggplot2::guide_axis(angle = 90))+ ggplot2::xlab("") +
-    ggplot2::theme_grey(base_size = 18)
+    ggplot2::theme_grey(base_size = input$font)
 
+
+
+} , width=input$bar_width,height=input$bar_height)
 
 })
-
-
 
 
 
@@ -471,14 +543,14 @@ output$distPlot <- plotly::renderPlotly({
 #  heatmaply::heatmaply(t(scale=row, t(as.matrix(as.data.frame(d)))), plot_method="plotly",labRow=rownames(d) ,row_side_colors =rownames(d), width = input$width, height = input$height )
 #"normalize", "percentize", "scale"
   if (input$norm == "normalize") {
-    heatmaply::heatmaply(t(heatmaply::normalize(t(as.matrix(as.data.frame(d))))), plot_method="plotly",labRow=rownames(d) ,row_side_colors =rownames(d), width = input$width, height = input$height )
+    heatmaply::heatmaply(t(heatmaply::normalize(t(as.matrix(as.data.frame(d))))),Rowv="FALSE", Colv="FALSE", plot_method="plotly",labRow=rownames(d) ,row_side_colors =rownames(d), width = input$width, height = input$height )
   }
   else if(input$norm == "percentize"){
-    heatmaply::heatmaply(t(heatmaply::percentize(t(as.matrix(as.data.frame(d))))), plot_method="plotly",labRow=rownames(d) ,row_side_colors =rownames(d), width = input$width, height = input$height )
+    heatmaply::heatmaply(t(heatmaply::percentize(t(as.matrix(as.data.frame(d))))),Rowv="FALSE", Colv="FALSE", plot_method="plotly",labRow=rownames(d) ,row_side_colors =rownames(d), width = input$width, height = input$height )
   }
  else if(input$norm == "scale"){
  #  heatmaply::heatmaply(scale="column",(t(as.matrix(as.data.frame(d)))), plot_method="plotly",labRow=rownames(d) ,row_side_colors =rownames(d), width = input$width, height = input$height )
-   heatmaply::heatmaply(scale="row",as.matrix(as.data.frame(t(janitor::remove_constant(t(d))))), plot_method="plotly", labRow=rownames(d) ,row_side_colors =rownames(d), width = input$width, height = input$height )
+   heatmaply::heatmaply(scale="row",as.matrix(as.data.frame(t(janitor::remove_constant(t(d))))), Rowv="FALSE", Colv="FALSE", plot_method="plotly", labRow=rownames(d) ,row_side_colors =rownames(d), width = input$width, height = input$height )
    }
   #  heatmaply::heatmaply(t(heatmaply::normalize(t(as.matrix(as.data.frame(d))))), plot_method="plotly",labRow=rownames(d) ,row_side_colors =rownames(d), width = input$width, height = input$height )
 #  heatmaply(t(percentize(t(as.matrix(dat2()$s[6:length(dat2()$s)])))), plot_method="plotly" ,labRow= dat2()$s[5],row_side_colors =dat2()$s[5])
@@ -527,28 +599,90 @@ ggc<<-corr_matrix
 
 
 
+
+# output$tab2B <- renderUI({
+#
+#   ##FIX THI
+#    e<-dat2B()$s
+#
+#   sss<<-e
+#   ##colnames(e)<-gsub('^.*\\_','',colnames(e))
+#   output$tab3 <- DT::renderDataTable(
+#     DT::datatable(
+#       cbind(e,prop.table(data.matrix(dat2B()$s[4:length(dat2()$s)] %>% dplyr::mutate_if(is.character, as.numeric) ),margin = 1)  %>%
+#               tibble::as.tibble()  %>%   dplyr::rename_with( ~ paste0("prop_", .x)) )    ,
+#       extensions = 'Buttons', options = list(columnDefs = list(list(targets=c((length(dat2B()$s)+1):(length(dat2B()$s) * 2 - 3)),visible=FALSE)),
+#                                              dom = 'Bfrtip', pageLength = 500,
+#                                              buttons = c('copy', 'csv', 'excel', 'pdf', 'print')#, buttons = list(list(extend = 'colvis', columns = c(2, 3, 4)))
+#
+#       )) %>%
+#       DT::formatStyle(names(dat2B()$s[4:length(dat2B()$s)]),
+#                       #  DT::formatStyle(names(e[6:length(e)]),
+#                       background = DT::styleColorBar(range(0, 1), 'lightblue'),
+#                       backgroundSize = '98% 88%',
+#                       valueColumns = c((length(dat2B()$s)+1):(length(dat2B()$s) * 2 - 3)),fontWeight = "bold",
+#                       backgroundRepeat = 'no-repeat',
+#                       backgroundPosition = 'center') %>%
+#    #   DT::formatStyle(names(dat2B()$s[1:3]), fontWeight = "bold")
+#      DT::formatStyle(names(dat2B()$s[1:3]), fontWeight = "bold")
+#   )
+#
+# })
+
+
 output$tab2 <- renderUI({
   e<-dat2()$s
-  ##colnames(e)<-gsub('^.*\\_','',colnames(e))
+  eee<<-e
+
+
 output$tab <- DT::renderDataTable(
-  DT::datatable(
-    cbind(e,prop.table(data.matrix(dat2()$s[4:length(dat2()$s)] %>% dplyr::mutate_if(is.character, as.numeric) ),margin = 1)  %>%
+
+
+
+if(input$column == "hide"){
+
+     DT::datatable(
+    cbind(e  %>% mutate(across(where(is.numeric), sprintf, fmt = '%.2f')),prop.table(data.matrix(dat2()$s[4:length(dat2()$s)] %>% dplyr::mutate_if(is.character, as.numeric) ),margin = 1)  %>%
              tibble::as.tibble()  %>%   dplyr::rename_with( ~ paste0("prop_", .x)) )    ,
+    colnames = rep("", ncol(e)),
   extensions = 'Buttons', options = list(columnDefs = list(list(targets=c((length(dat2()$s)+1):(length(dat2()$s) * 2 - 3)),visible=FALSE)),
       dom = 'Bfrtip', pageLength = 500,
       buttons = c('copy', 'csv', 'excel', 'pdf', 'print')#, buttons = list(list(extend = 'colvis', columns = c(2, 3, 4)))
 
     )) %>%
     DT::formatStyle(names(dat2()$s[4:length(dat2()$s)]),
-  #  DT::formatStyle(names(e[6:length(e)]),
                             background = DT::styleColorBar(range(0, 1), 'lightblue'),
                             backgroundSize = '98% 88%',
                             valueColumns = c((length(dat2()$s)+1):(length(dat2()$s) * 2 - 3)),fontWeight = "bold",
                             backgroundRepeat = 'no-repeat',
                             backgroundPosition = 'center') %>%
-    DT::formatStyle(names(dat2()$s[1:3]), fontWeight = "bold")
-  #  DT::formatStyle(names(e[1:5]), fontWeight = "bold")
-)
+   DT::formatStyle(names(dat2()$s[1:3]), fontWeight = "bold")
+
+  }
+else{
+
+   DT::datatable(cbind(e %>% mutate(across(where(is.numeric), sprintf, fmt = '%.2f')),prop.table(data.matrix(dat2()$s[4:length(dat2()$s)] %>% dplyr::mutate_if(is.character, as.numeric) ),margin = 1)  %>%
+                           tibble::as.tibble()  %>%   dplyr::rename_with( ~ paste0("prop_", .x)) )    ,
+                 extensions = 'Buttons', options = list(columnDefs = list(list(targets=c((length(dat2()$s)+1):(length(dat2()$s) * 2 - 3)),visible=FALSE)),
+                                                        dom = 'Bfrtip', pageLength = 500,
+                                                        buttons = c('copy', 'csv', 'excel', 'pdf', 'print')#, buttons = list(list(extend = 'colvis', columns = c(2, 3, 4)))
+
+                 )) %>%
+     DT::formatStyle(names(dat2()$s[4:length(dat2()$s)]),
+                     background = DT::styleColorBar(range(0, 1), 'lightblue'),
+                     backgroundSize = '98% 88%',
+                     valueColumns = c((length(dat2()$s)+1):(length(dat2()$s) * 2 - 3)),fontWeight = "bold",
+                     backgroundRepeat = 'no-repeat',
+                     backgroundPosition = 'center') %>%
+     DT::formatStyle(names(dat2()$s[1:3]), fontWeight = "bold")
+
+ }
+
+
+
+
+
+  )
 
 })
 
