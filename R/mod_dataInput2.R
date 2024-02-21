@@ -310,11 +310,29 @@ mod_dataInput_server2 <- function(input, output, session, file){
         # Apply the function to each tibble in the list
       #  df.list_with_id <- purrr::imap(df.list, add_identifier) %>%   purrr::map(~ filter(.x, grouped_by != 'Fastq ID'))
 
-        df.list_with_id <- purrr::imap(df.list, function(df, identifier) {
-          df %>%
+       # df.list_with_id <- purrr::imap(df.list, function(df, identifier) {
+      #    df %>%
+      #      dplyr::mutate(unique_id = dplyr::row_number())
+      #  }) %>%
+      #    purrr::map(~ filter(.x, grouped_by != 'Fastq ID'))
+
+
+        df.list_with_id <- list()
+        for (i in seq_along(df.list)) {
+          df <- df.list[[i]]
+          df_with_id <- df %>%
             dplyr::mutate(unique_id = dplyr::row_number())
-        }) %>%
-          purrr::map(~ filter(.x, grouped_by != 'Fastq ID'))
+          df.list_with_id[[i]] <- df_with_id
+        }
+        ddff<<-df.list_with_id
+        # Step 2: Filter rows in each data frame
+        df.list_filtered <- list()
+        for (i in seq_along(df.list_with_id)) {
+          df_with_id <- df.list_with_id[[i]]
+          df_filtered <- filter(df_with_id, grouped_by != 'Fastq ID')
+          df.list_filtered[[i]] <- df_filtered
+        }
+        ddff2<<-df.list_filtered
 
         sdd <<- df.list_with_id
         s <- df.list_with_id  %>%

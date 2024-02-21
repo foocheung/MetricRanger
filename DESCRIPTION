@@ -13,7 +13,7 @@ Imports:
     golem (>= 0.4.1),
     shiny,
     shinyFiles,
-    tidyverse,
+    ggplot2,
     tidyr,
     foreach,
     purrr,
