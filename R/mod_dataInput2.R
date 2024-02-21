@@ -501,7 +501,7 @@ mod_dataInput_server2 <- function(input, output, session, file){
       ssslll<<-sss_l
 
       ggplot2::ggplot(sss_l, ggplot2::aes(x=reorder(key, -value), y=value)) +
-        ggplot2::geom_col() +  ggplot2::geom_text(aes(label = value), vjust = -0.5)  +
+        ggplot2::geom_col() +  ggplot2::geom_text(ggplot2:aes(label = value), vjust = -0.5)  +
         #   ggplot2::facet_wrap(.~ metric_name,ncol = 5, scales = "free")+
         ggplot2::facet_wrap(library_type ~ metric_name,ncol = 5, scales = "free")+
         ggplot2::scale_x_discrete(guide = ggplot2::guide_axis(angle = 90))+ ggplot2::xlab("") +
