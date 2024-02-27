@@ -738,8 +738,10 @@ mod_dataInput_server2 <- function(input, output, session, file){
     uu<- input$websumm
 
     m <- paste("/",paste(gtools::split_path(dirname(uu),depth_first = FALSE)[1:(length(unlist(strsplit(uu, '/')))-6)], collapse = '/'), sep="")
+   # m <- paste(paste(gtools::split_path(dirname(uu),depth_first = FALSE)[1:(length(unlist(strsplit(uu, '/')))-6)], collapse = '/'), sep="")
     # m<-paste(gtools::split_path(dirname(uu))[1:(length(unlist(strsplit(uu, '/')))-6)], collapse = '/')
     #  m<-paste("/",m,sep="")
+    m <- gsub("//", "/", m)
     addResourcePath("library", m)
     #addResourcePath("library", "/Volumes/CHI/TEMP/RUN")
     mmm<<-m
