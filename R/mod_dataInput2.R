@@ -301,42 +301,57 @@ mod_dataInput_server2 <- function(input, output, session, file){
           fflst <<- flst
           dfl<<- df.list
 
-          # Create a function to add a unique identifier to each tibble in the list
-          # add_identifier <- function(df, identifier) {
-          #   df %>%
-          #     dplyr::mutate(unique_id = dplyr::row_number())
-          # }
-
-          # Apply the function to each tibble in the list
-          #  df.list_with_id <- purrr::imap(df.list, add_identifier) %>%   purrr::map(~ filter(.x, grouped_by != 'Fastq ID'))
-
-          # df.list_with_id <- purrr::imap(df.list, function(df, identifier) {
+          # # Create a function to add a unique identifier to each tibble in the list
+          #  add_identifier <- function(df, identifier) {
           #    df %>%
           #      dplyr::mutate(unique_id = dplyr::row_number())
-          #  }) %>%
+          #  }
+          #
+          # # Apply the function to each tibble in the list
+          # #  df.list_with_id <- purrr::imap(df.list, add_identifier) %>%   purrr::map(~ filter(.x, grouped_by != 'Fastq ID'))
+          #
+          #  # df.list_with_id <- purrr::imap(df.list, function(df, add_identifier) {
+          #  #    df %>%
+          #  #      dplyr::mutate(unique_id = dplyr::row_number())
+          #  #  }) %>%
+          #  #    purrr::map(~ filter(.x, grouped_by != 'Fastq ID'))
+          #
+          #  df.list_with_id <- purrr::imap(df.list, ~ add_identifier(.x)) %>%
           #    purrr::map(~ filter(.x, grouped_by != 'Fastq ID'))
 
+           library(tidyverse)
 
-          df.list_with_id <- list()
-          for (i in seq_along(df.list)) {
-            df <- df.list[[i]]
-            df_with_id <- df %>%
-              dplyr::mutate(unique_id = dplyr::row_number())
-            df.list_with_id[[i]] <- df_with_id
-          }
+
+           add_identifier <- function(df) {
+             df <- dplyr::mutate(df, unique_id = dplyr::row_number())
+             return(df)
+           }
+
+           # Apply the function to each data frame in the list
+           df.list_with_id <- lapply(df.list, add_identifier)
+           df.list_with_id <- lapply(df.list_with_id, function(x) dplyr::filter(x, grouped_by != 'Fastq ID'))
+
+
+       #   df.list_with_id <- list()
+      #   for (i in seq_along(df.list)) {
+      #      df <- df.list[[i]]
+      #      df_with_id <- df %>%
+      #        dplyr::mutate(unique_id = dplyr::row_number())
+      #      df.list_with_id[[i]] <- df_with_id
+      #    }
           ddff<<-df.list_with_id
           # Step 2: Filter rows in each data frame
           df.list_filtered <- list()
           for (i in seq_along(df.list_with_id)) {
             df_with_id <- df.list_with_id[[i]]
-            df_filtered <- filter(df_with_id, "grouped_by" != 'Fastq ID')
+            df_filtered <- filter(df_with_id, grouped_by != 'Fastq ID')
             df.list_filtered[[i]] <- df_filtered
           }
           ddff2<<-df.list_filtered
 
           sdd <<- df.list_with_id
           s <- df.list_with_id  %>%
-            #  purrr::map(subset, select = -c(group_name, grouped_by)) %>%
+        #      purrr::map(subset, select = -c(group_name, grouped_by)) %>%
             purrr::map(subset,select = -c(unique_id)) %>%
             #     purrr::map(subset) %>%
             purrr::reduce(dplyr::bind_rows) %>%
@@ -349,9 +364,9 @@ mod_dataInput_server2 <- function(input, output, session, file){
             tidyr::pivot_wider(
               names_from = name,
               values_from = values
-            ) %>%
+            ) ##%>%
             #%>% dplyr::select(-c(group_name, grouped_by, unique_id))
-            dplyr::select(-c(group_name, grouped_by))
+          ##  dplyr::select(-c(group_name, grouped_by))
           sss <<- s
 
 
@@ -472,22 +487,29 @@ mod_dataInput_server2 <- function(input, output, session, file){
 
     sss1 <-input$sel
 
+    dddss<<-dat2()$s
+
+   #  sss<-file$df()$s1 %>% dplyr::select(Metric.Name,file2$sampleid()) %>% dplyr::filter(Metric.Name %in% file2$rowid())
+  #  sss<-dat2()$s %>% dplyr::select(Metric.Name,file2$sampleid()) %>% dplyr::filter(Metric.Name %in% file2$rowid())
+
+   #sss_l<-dat2()$s %>% tibble::as.tibble() %>%
+  #     tidyr::gather(key = key, value = value, starts_with('sample')) %>% dplyr::rename_all(~ sub("sample_", "", .x))
+  #    sss_l<-   file$df()$s1 %>% tibble::as.tibble() %>% tidyr::gather(key = key, value = value, starts_with('sample'))
 
 
-    # sss<-file$df()$s1 %>% dplyr::select(Metric.Name,file2$sampleid()) %>% dplyr::filter(Metric.Name %in% file2$rowid())
-    # sss_l<-sss %>% tibble::as.tibble() %>%
-    #   tidyr::gather(key = key, value = value, starts_with('sample')) %>% dplyr::rename_all(~ sub("sample_", "", .x))
-    ##  sss_l<-   file$df()$s1 %>% tibble::as.tibble() %>% tidyr::gather(key = key, value = value, starts_with('sample'))
+   # sss_l<-    e<-dat2()$s %>% tibble::as.tibble() %>% tidyr::gather(key = "key", value = "value",3:length( e<-dat2()$s))
 
-
-    sss_l<-    e<-dat2()$s %>% tibble::as.tibble() %>% tidyr::gather(key = "key", value = "value",4:length( e<-dat2()$s))
+    sss_l<- dat2()$s %>%
+      gather(key = "key", value = "value", starts_with("sample_"))
 
     ssss_ll<<-sss_l
-    sss_l$key <- gsub("sample_", "", sss_l$key)
+   # sss_l$key <- gsub("sample_", "", sss_l$key)
     #dplyr::rename_all(~ sub("sample_", "", .x)) %>%
-    sss2_2l <<- sss_l
+
     # sss_l <- sss_l %>%  dplyr::filter(key %in% file2$sampleid())  %>% dplyr::filter(metric_name %in% file2$rowid())
     sss_l <- sss_l  %>% dplyr::filter(metric_name %in% input$sel)
+    sss2_2l <<- sss_l
+
     sss_l
   })
 
@@ -539,7 +561,7 @@ mod_dataInput_server2 <- function(input, output, session, file){
 
 
 
-      e<-e[3:length(e)]
+      e<-e[5:length(e)]
       eee<<-e
 
       e <- e[rowSums(e[-1])>0,]
@@ -581,7 +603,7 @@ mod_dataInput_server2 <- function(input, output, session, file){
   output$pca <- renderPlot({
 
     e<-dat2()$s
-    e<-e[3:length(e)]
+    e<-e[5:length(e)]
     rownames(e)<-make.names(e$metric_name, unique = TRUE)
 
     factoextra::fviz_pca_ind(stats::prcomp(
@@ -602,7 +624,7 @@ mod_dataInput_server2 <- function(input, output, session, file){
       e <- e%>%
         dplyr::distinct(metric_name, .keep_all = TRUE)
 
-      e<-e[3:length(e)]
+      e<-e[5:length(e)]
       # rownames(e)<-make.names(e$metric_name, unique = TRUE)
       #  colnames(e)<-make.names(e$metric_name, unique = TRUE)
       corr_matrix<-cor(t(e[, -1]))
