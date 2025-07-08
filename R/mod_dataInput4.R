@@ -28,49 +28,32 @@ mod_dataInput_ui4 <- function(id){
 #' @export
 #' @keywords internal
 
-mod_dataInput_server4 <- function(input, output, session, file, file2){  #,batches,sim){
+mod_dataInput_server4 <- function(input, output, session, file, file2) {
   ns <- session$ns
 
-
-
-  s<-reactive({
+  s <- reactive({
     req(file2$goButtonp2())
 
-   sss1 <-file$df()$s
-  ssi<<- file2$sampleid()
-  rri<<-  file2$rowid()
-    sss2<<-sss1
+    df_s <- file$df()$s
+    sample_ids <- file2$sampleid()
+    row_ids <- file2$rowid()
 
- # sss<-file$df()$s1 %>% dplyr::select(Metric.Name,file2$sampleid()) %>% dplyr::filter(Metric.Name %in% file2$rowid())
- # sss_l<-sss %>% tibble::as.tibble() %>%
- #   tidyr::gather(key = key, value = value, starts_with('sample')) %>% dplyr::rename_all(~ sub("sample_", "", .x))
-  ##  sss_l<-   file$df()$s1 %>% tibble::as.tibble() %>% tidyr::gather(key = key, value = value, starts_with('sample'))
+    df_long <- df_s %>%
+      tibble::as_tibble() %>%
+      tidyr::gather(key = "key", value = "value", 6:ncol(df_s)) %>%
+      dplyr::mutate(key = gsub("sample_", "", key)) %>%
+      dplyr::filter(key %in% sample_ids, metric_name %in% row_ids)
 
-
-    sss_l<-   file$df()$s %>% tibble::as.tibble() %>% tidyr::gather(key = "key", value = "value",6:length(file$df()$s))
-
-    ssss_ll<<-sss_l
-    sss_l$key <- gsub("sample_", "", sss_l$key)
-      #dplyr::rename_all(~ sub("sample_", "", .x)) %>%
-    sss2_2l <<- sss_l
-        sss_l <- sss_l %>%  dplyr::filter(key %in% file2$sampleid())  %>% dplyr::filter(metric_name %in% file2$rowid())
-
-  sss_l
+    df_long
   })
 
   output$trend <- renderPlot({
     req(file2$goButtonp2())
-sss_l<-s()
-ssslll<<-sss_l
+    df_long <- s()
 
-     ggplot2::ggplot(sss_l, ggplot2::aes(x=key, y=value)) +
+    ggplot2::ggplot(df_long, ggplot2::aes(x = key, y = value)) +
       ggplot2::geom_col() +
-      ggplot2::facet_wrap(.~ metric_name,ncol = 5, scales = "free")+
+      ggplot2::facet_wrap(. ~ metric_name, ncol = 5, scales = "free") +
       ggplot2::scale_x_discrete(guide = ggplot2::guide_axis(angle = 90))
-
-
   })
-
-
-
 }
