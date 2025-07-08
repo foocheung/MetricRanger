@@ -16,7 +16,6 @@ This Shiny application provides an interactive interface for visualizing and exp
 -  Directory selection with `shinyFiles` for recursive metrics loading
 -  Multiple visualization tabs: bar charts, PCA, correlation, and heatmaps
 -  Interactive trend plots across user-selected metrics
--  Sample batch optimization using the OSAT package (if included)
 -  Embedded HTML web summaries (e.g., Cell Ranger reports)
 -  Exportable tables with `DT` and screenshot functionality
 
@@ -45,13 +44,7 @@ install.packages(c(
 ))
 ````
 
-Also install any required Bioconductor packages, e.g.:
 
-```r
-if (!requireNamespace("BiocManager", quietly = TRUE))
-  install.packages("BiocManager")
-BiocManager::install("OSAT")
-```
 
 ## Running the App
 
@@ -62,17 +55,6 @@ source("run_app.R")
 run_app()
 ```
 
-## 📁 Modules Overview
-
-| Module                 | Purpose                                                 |
-| ---------------------- | ------------------------------------------------------- |
-| `mod_dataInput`        | Sidebar UI for file selection and control parameters    |
-| `mod_dataInput2`       | Main dashboard with tabs for tables and multiple plots  |
-| `mod_dataInput3`       | Delta tab for comparing two directories                 |
-| `mod_dataInput4`       | Plotting selected metric trends across samples          |
-| `mod_dataInput5`       | File list view in a searchable table                    |
-| `mod_table` (optional) | Sample batch optimization using OSAT                    |
-| `mod_box` (optional)   | Boxplot of log-transformed values from selected columns |
 
 ## Screenshots
 
@@ -87,10 +69,6 @@ This app is ideal for researchers working with:
 * TCR/BCR VDJ libraries
 * ATAC-seq and custom feature libraries
 
-##  Development Notes
-
-* Built using the [golem](https://thinkr-open.github.io/golem/) framework
-* `run_app()` initializes `app_ui` and `app_server` via `shinyApp()`
 
 ## Author
 
